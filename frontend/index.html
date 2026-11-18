@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff8f0">
+  <title>Lsty Klinik | Sistem Informasi Akuntansi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-layout">
+      <section class="auth-visual" aria-label="Lsty Klinik, kecantikan dan perawatan">
+        <img src="welcome-hero.png" alt="Perawatan kecantikan dan produk perawatan kulit">
+        <div class="auth-visual-copy">
+          <p class="eyebrow">KECANTIKAN &amp; PERAWATAN</p>
+          <h1>Kelola Lsty Klinik dengan lebih mudah.</h1>
+          <p>Transaksi, pelanggan, dan laporan klinik dalam satu ruang kerja admin.</p>
+        </div>
+      </section>
+      <section class="auth-panel" aria-labelledby="login-title">
+        <div class="auth-card">
+          <div class="auth-logo">L</div>
+          <p class="eyebrow">AKSES ADMIN</p>
+          <h2 id="login-title">Masuk ke Lsty Klinik</h2>
+          <form class="auth-form" id="login-form">
+            <label class="field"><span>Email</span><input id="login-email" type="email" autocomplete="username" required></label>
+            <label class="field"><span>Password</span><span class="password-input-wrap"><input id="login-password" type="password" autocomplete="current-password" required><button class="password-toggle" id="toggle-password" type="button" aria-pressed="false">Lihat</button></span></label>
+            <p class="auth-notice" id="login-error" role="alert" hidden></p>
+            <button class="button button-primary submit-wide" id="login-submit" type="submit">Masuk</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <a class="brand" href="#dashboard" aria-label="Lsty Klinik - dashboard">
+        <span class="brand-mark">L</span>
+        <span><strong>Lsty Klinik</strong><small>Beauty & Treatment</small></span>
+      </a>
+      <p class="nav-label">MENU UTAMA</p>
+      <nav class="main-nav">
+        <button class="nav-link active" data-view="dashboard"><span class="nav-icon">⌂</span>Utama</button>
+        <button class="nav-link" data-view="transactions"><span class="nav-icon">＋</span>Transaksi</button>
+        <button class="nav-link" data-view="booking"><span class="nav-icon">◷</span>Booking</button>
+        <button class="nav-link" data-view="customers"><span class="nav-icon">♙</span>Pelanggan</button>
+        <button class="nav-link" data-view="items"><span class="nav-icon">◇</span>Produk & Jasa</button>
+        <button class="nav-link" data-view="reports"><span class="nav-icon">▤</span>Laporan</button>
+        <button class="nav-link" data-view="receivables"><span class="nav-icon">◷</span>Piutang</button>
+        <button class="nav-link" data-view="journal"><span class="nav-icon">≡</span>Jurnal Umum</button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="status-dot"></span>
+        <span><strong>Sistem aktif</strong><small>Data tersinkronisasi</small></span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark">L</span><strong>Lsty Klinik</strong></div>
+        <div class="breadcrumb"><span>Ruang kerja</span><span class="crumb-divider">/</span><strong id="current-page">Utama</strong></div>
+        <div class="topbar-right"><span class="today-label" id="today-label"></span><span class="avatar admin-email" id="admin-email"></span><button class="text-button" id="sign-out" type="button">Keluar</button></div>
+      </header>
+
+      <div class="page-wrap">
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow">LSTY · BEAUTY & CARE</p>
+            <h1 id="page-title">Selamat datang kembali</h1>
+            <p class="page-subtitle">Sistem Informasi Akuntansi Penjualan Produk dan Jasa Treatment</p>
+          </div>
+          <button class="button button-primary" data-go="transactions"><span aria-hidden="true">＋</span> Transaksi baru</button>
+        </section>
+
+        <div id="notice" class="notice" role="status" hidden></div>
+
+        <section class="view-panel active" id="view-dashboard" aria-labelledby="page-title">
+          <div class="stat-grid">
+            <article class="stat-card stat-income">
+              <div class="stat-top"><span class="stat-icon">↗</span><span class="stat-caption">PENJUALAN BERSIH · SELURUH PERIODE</span></div>
+              <p class="stat-value" id="stat-revenue">Rp0</p><p class="stat-foot">Total bersih transaksi aktif sepanjang waktu</p>
+            </article>
+            <article class="stat-card stat-count">
+              <div class="stat-top"><span class="stat-icon">▤</span><span class="stat-caption">TRANSAKSI</span></div>
+              <p class="stat-value" id="stat-count">0</p><p class="stat-foot">Jumlah seluruh transaksi</p>
+            </article>
+            <a class="stat-card stat-receivable dashboard-receivable-link" href="#piutang" data-go="receivables" aria-label="Buka halaman piutang">
+              <div class="stat-top"><span class="stat-icon">◷</span><span class="stat-caption">PIUTANG BELUM LUNAS</span></div>
+              <p class="stat-value" id="stat-receivable">Rp0</p><p class="stat-foot">Menunggu pembayaran pelanggan</p>
+            </a>
+            <a class="stat-card stat-booking dashboard-booking-link" href="#booking" data-go="booking" aria-label="Buka jadwal booking">
+              <div class="stat-top"><span class="stat-icon">◷</span><span class="stat-caption">JADWAL HARI INI</span></div>
+              <p class="stat-value" id="stat-booking">0</p><p class="stat-foot">Booking hari ini</p>
+            </a>
+          </div>
+          <div class="dashboard-grid">
+            <section class="surface recent-surface">
+              <div class="section-title-row"><div><p class="eyebrow">AKTIVITAS TERBARU</p><h2>Penjualan terbaru</h2></div><button class="text-button" data-go="reports">Lihat laporan <span>→</span></button></div>
+              <div class="table-wrap recent-sales-wrap"><table><thead><tr><th>No. transaksi</th><th>Pelanggan</th><th>Tanggal</th><th>Pembayaran</th><th class="align-right">Total</th></tr></thead><tbody id="recent-sales-body"><tr><td colspan="5" class="empty-state">Memuat transaksi...</td></tr></tbody></table></div>
+            </section>
+            <aside class="welcome-panel">
+              <div class="welcome-flower" aria-hidden="true">✿</div>
+              <p class="eyebrow">HARI INI DI LSTY</p><h2>Rawat kecantikan, kelola bisnis dengan lebih tenang.</h2>
+              <p>Catat penjualan produk dan treatment dalam satu tempat.</p>
+              <button class="button button-light" data-go="transactions">Catat penjualan <span>→</span></button>
+            </aside>
+          </div>
+          <section class="surface table-surface dashboard-payment-surface"><div class="section-title-row"><div><p class="eyebrow">KAS MASUK PIUTANG</p><h2>Pembayaran cicilan terbaru</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal bayar</th><th>No. transaksi</th><th>Pelanggan</th><th>Cicilan</th><th>Metode</th><th class="align-right">Nominal</th></tr></thead><tbody id="recent-installment-payments-body"><tr><td colspan="6" class="empty-state">Belum ada pembayaran cicilan.</td></tr></tbody></table></div></section>
+        </section>
+
+        <section class="view-panel" id="view-transactions">
+          <div class="pos-layout">
+            <section class="surface catalog-panel">
+              <div class="section-title-row"><div><p class="eyebrow">KASIR</p><h2>Katalog</h2></div><span class="catalog-count" id="catalog-count">0 item</span></div>
+              <label class="field catalog-search-field"><span class="sr-only">Cari produk atau jasa</span><input id="catalog-search" type="search" placeholder="Cari produk atau jasa..."></label>
+              <div class="catalog-tabs" role="tablist" aria-label="Jenis katalog">
+                <button class="catalog-tab is-active" type="button" role="tab" aria-selected="true" data-catalog-category="Produk">Produk</button>
+                <button class="catalog-tab" type="button" role="tab" aria-selected="false" data-catalog-category="Jasa Treatment">Jasa Treatment</button>
+              </div>
+              <div class="catalog-grid" id="catalog-grid" aria-live="polite"></div>
+            </section>
+            <aside class="surface pos-cart-panel">
+              <div class="section-title-row"><div><p class="eyebrow">PENJUALAN BARU</p><h2>Keranjang</h2></div><span class="cart-count" id="cart-count">0 item</span></div>
+              <div class="cart-customer-fields">
+                <label class="field">Pelanggan<select id="sale-customer" required><option value="">Pilih pelanggan</option></select></label>
+                <label class="field">Tanggal<input id="sale-date" type="date" required></label>
+              </div>
+              <div class="cart-content" id="cart-content">
+                <p class="cart-empty" id="cart-empty">Keranjang masih kosong</p>
+                <section class="cart-group" id="cart-products-group" hidden>
+                  <h3>Produk</h3><div class="cart-item-list" id="cart-products-list"></div>
+                  <div class="cart-subtotal"><span>Subtotal produk</span><strong id="cart-products-subtotal">Rp 0</strong></div>
+                </section>
+                <section class="cart-group" id="cart-treatments-group" hidden>
+                  <h3>Jasa Treatment</h3><div class="cart-item-list" id="cart-treatments-list"></div>
+                  <div class="cart-subtotal"><span>Subtotal jasa</span><strong id="cart-treatments-subtotal">Rp 0</strong></div>
+                </section>
+              </div>
+              <div class="cart-subtotal"><span>Subtotal</span><strong id="cart-subtotal">Rp 0</strong></div>
+              <div class="cart-subtotal discount-line" id="cart-discount-row" hidden><span id="cart-discount-label">Diskon produk 15%</span><strong id="cart-discount-amount">−Rp 0</strong></div>
+              <p class="discount-hint" id="cart-discount-hint" hidden></p>
+              <div class="sale-total"><span>Total bayar</span><strong id="sale-total">Rp 0</strong></div>
+              <button class="button button-primary submit-wide" id="checkout-start" type="button" disabled>Lanjut ke konfirmasi <span>→</span></button>
+            </aside>
+          </div>
+          <section class="surface table-surface transaction-history">
+            <div class="section-title-row"><div><p class="eyebrow">RIWAYAT</p><h2>Semua transaksi</h2></div></div>
+            <div class="toolbar-row transaction-toolbar">
+              <label class="field search-field"><span>Pencarian transaksi</span><input id="sales-search" type="search" placeholder="Cari pelanggan, no transaksi, item..."></label>
+              <label class="field inline-filter"><span>Status pembayaran</span><select id="sales-status-filter"><option value="">Semua</option><option value="Lunas">Lunas</option><option value="Belum Lunas">Belum Lunas</option></select></label>
+            </div>
+            <div class="table-wrap"><table><thead><tr><th>No. transaksi</th><th>Pelanggan</th><th>Tanggal</th><th>Metode</th><th>Status</th><th class="align-right">Total</th><th>Aksi</th></tr></thead><tbody id="sales-body"><tr><td colspan="7" class="empty-state">Memuat transaksi...</td></tr></tbody></table></div>
+          </section>
+        </section>
+
+        <section class="view-panel" id="view-booking">
+          <div class="booking-layout">
+            <section class="surface form-surface booking-form-panel">
+              <div class="section-title-row"><div><p class="eyebrow">JADWAL TREATMENT</p><h2>Buat booking</h2></div></div>
+              <form id="booking-form">
+                <div class="booking-customer-field">
+                  <label class="field" for="booking-customer">Pelanggan<select id="booking-customer" required><option value="">Pilih pelanggan</option></select></label>
+                  <button class="text-button booking-new-customer" type="button" data-go="customers">Pelanggan baru?</button>
+                </div>
+                <div class="booking-selection-card" id="booking-customer-details" hidden>
+                  <strong id="booking-customer-name"></strong>
+                  <span id="booking-customer-phone"></span>
+                  <span id="booking-customer-address"></span>
+                </div>
+                <label class="field booking-field">Jasa treatment<select id="booking-service" required><option value="">Pilih jasa treatment</option></select></label>
+                <div class="booking-selection-card" id="booking-service-details" hidden>
+                  <strong id="booking-service-name"></strong>
+                  <span>Harga jasa <b id="booking-service-price"></b></span>
+                </div>
+                <label class="field booking-field">Tanggal<input id="booking-date" type="date" required></label>
+                <div class="field booking-field"><span>Pilih jam</span><div class="booking-slot-grid" id="booking-time-slots" role="group" aria-label="Slot waktu booking"></div></div>
+                <label class="field booking-field">Catatan (opsional)<textarea id="booking-note" maxlength="500" placeholder="Catatan tambahan untuk booking"></textarea></label>
+                <p class="booking-summary" id="booking-summary" aria-live="polite">Lengkapi pilihan pelanggan, jasa, tanggal, dan jam.</p>
+                <button class="button button-primary submit-wide" id="booking-submit" type="submit" disabled>Simpan booking</button>
+              </form>
+            </section>
+
+            <section class="surface booking-schedule-panel">
+              <div class="section-title-row booking-schedule-heading">
+                <div><p class="eyebrow">JADWAL HARIAN</p><h2>Jadwal</h2><strong id="booking-schedule-date-label"></strong></div>
+                <div class="booking-date-nav">
+                  <button class="button button-quiet" type="button" data-booking-day-step="-1" aria-label="Hari sebelumnya">‹</button>
+                  <button class="button button-quiet" type="button" id="booking-go-today">Hari ini</button>
+                  <button class="button button-quiet" type="button" data-booking-day-step="1" aria-label="Hari berikutnya">›</button>
+                </div>
+              </div>
+              <div class="booking-list" id="booking-day-list" aria-live="polite"><p class="empty-state">Memuat jadwal...</p></div>
+            </section>
+          </div>
+
+          <section class="surface table-surface booking-all-panel">
+            <div class="section-title-row"><div><p class="eyebrow">RIWAYAT BOOKING</p><h2>Semua booking</h2></div></div>
+            <form class="toolbar-row booking-filters" id="booking-filter-form">
+              <label class="field">Status<select id="booking-status-filter"><option value="">Semua status</option><option>Dijadwalkan</option><option>Selesai</option><option>Batal</option><option>Tidak Hadir</option></select></label>
+              <label class="field">Dari tanggal<input id="booking-filter-start" type="date"></label>
+              <label class="field">Sampai tanggal<input id="booking-filter-end" type="date"></label>
+              <button class="button button-primary" type="submit">Terapkan filter</button>
+            </form>
+            <div class="table-wrap">
+              <table class="booking-table">
+                <thead><tr><th>Tanggal</th><th>Jam</th><th>Pelanggan</th><th>No. HP</th><th>Alamat</th><th>Jasa treatment</th><th>Harga jasa</th><th>Catatan</th><th>Status</th><th>No. transaksi</th><th>Aksi</th></tr></thead>
+                <tbody id="booking-all-body"><tr><td colspan="11" class="empty-state">Memuat booking...</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-panel" id="view-customers">
+          <div class="toolbar-row customer-toolbar">
+            <label class="field search-field">
+              <span>Pencarian pelanggan</span>
+              <input id="customer-search" type="search" placeholder="Cari nama, nomor HP, alamat...">
+            </label>
+          </div>
+          <section class="surface form-surface compact-form"><div class="section-title-row"><div><p class="eyebrow">DATABASE PELANGGAN</p><h2 id="customer-form-title">Tambah pelanggan</h2></div></div>
+            <form id="customer-form"><input id="customer-id" type="hidden"><div class="form-grid customer-form-grid"><label class="field">Nama lengkap<input id="customer-name" required placeholder="Nama pelanggan"></label><label class="field">Nomor HP<input id="customer-phone" required placeholder="08xxxxxxxxxx"></label><label class="field">Alamat<input id="customer-address" placeholder="Alamat pelanggan"></label><label class="field">Tanggal daftar<input id="customer-date" type="date" required></label></div><div class="form-actions"><button class="button button-primary" type="submit" id="customer-submit">Simpan pelanggan</button><button class="button button-quiet" type="button" id="customer-cancel" hidden>Batal</button></div></form>
+          </section>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">DAFTAR PELANGGAN</p><h2>Pelanggan terdaftar</h2></div><span class="count-chip" id="customer-list-count">0 pelanggan</span></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Nomor HP</th><th>Alamat</th><th>Tanggal daftar</th><th>Aksi</th></tr></thead><tbody id="customers-body"><tr><td colspan="5" class="empty-state">Memuat pelanggan...</td></tr></tbody></table></div></section>
+        </section>
+
+        <section class="view-panel" id="view-items">
+          <section class="surface form-surface compact-form"><div class="section-title-row"><div><p class="eyebrow">KATALOG KLINIK</p><h2 id="item-form-title">Tambah produk atau jasa</h2></div></div>
+            <form id="item-form"><input id="item-id" type="hidden"><div class="form-grid item-form-grid"><label class="field">Nama item<input id="item-name" required placeholder="Nama produk atau treatment"></label><label class="field">Jenis<select id="item-type"><option>Produk</option><option>Jasa Treatment</option></select></label><label class="field">Harga jual<input id="item-price" type="number" min="0" step="1000" required placeholder="0"></label><label class="field product-only-field">Harga pokok (HPP)<input id="item-cost" type="number" min="0" step="1000" value="0"></label><label class="field product-only-field">Stok<input id="item-stock" type="number" min="0" step="1" value="0"></label></div><div class="form-actions"><button class="button button-primary" type="submit" id="item-submit">Simpan item</button><button class="button button-quiet" type="button" id="item-cancel" hidden>Batal</button></div></form>
+          </section>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">KATALOG AKTIF</p><h2>Produk & jasa treatment</h2></div><span class="count-chip" id="item-list-count">0 item</span></div><div class="table-wrap"><table><thead><tr><th>Nama item</th><th>Jenis</th><th>Harga jual</th><th>HPP</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="items-body"><tr><td colspan="6" class="empty-state">Memuat katalog...</td></tr></tbody></table></div></section>
+        </section>
+
+        <section class="view-panel" id="view-reports">
+          <section class="surface report-filter"><div><p class="eyebrow">ANALISIS PENJUALAN</p><h2>Laporan per periode</h2></div><form id="report-form" class="date-filter"><label class="field">Dari tanggal<input type="date" id="report-start"></label><label class="field">Sampai tanggal<input type="date" id="report-end"></label><button class="button button-primary" type="submit">Tampilkan</button></form></section>
+          <div class="report-summary-grid"><article class="report-summary"><span>Penjualan produk</span><strong id="report-products-total">Rp0</strong><small id="report-products-count">0 item terjual</small></article><article class="report-summary treatment-summary"><span>Jasa treatment</span><strong id="report-treatment-total">Rp0</strong><small id="report-treatment-count">0 treatment terjual</small></article><article class="report-summary overall-summary"><span>Total penjualan kotor</span><strong id="report-grand-total">Rp0</strong><small id="report-row-count">0 baris detail</small></article></div>
+          <div class="report-summary-grid report-discount-summary-grid"><article class="report-summary discount-summary"><span>Total diskon</span><strong id="report-discount-total">Rp0</strong><small>Total diskon otomatis per transaksi</small></article><article class="report-summary overall-summary"><span>Penjualan bersih</span><strong id="report-net-total">Rp0</strong><small>Penjualan kotor dikurangi diskon</small></article></div>
+          <div class="report-summary-grid receivable-cash-summary"><article class="report-summary treatment-summary"><span>Kas masuk pelunasan piutang</span><strong id="report-receivable-cash-total">Rp0</strong><small>Tidak menambah pendapatan penjualan</small></article></div>
+          <div class="report-actions"><button class="button button-outline" id="export-report-csv" type="button">Export Excel</button><button class="button button-quiet" id="print-report-pdf" type="button">Print PDF</button></div>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">LAPORAN KEUANGAN</p><h2>Labarugi & Buku Besar</h2></div></div><div class="tab-group"><button class="tab-button is-active" data-report-tab="profit-loss" type="button">Laba Kotor</button><button class="tab-button" data-report-tab="ledger" type="button">Buku Besar</button></div><div id="profit-loss-panel" class="report-tab-panel is-active"><table class="ledger-table"><thead><tr><th>Akun</th><th>Nominal</th></tr></thead><tbody id="profit-loss-body"><tr><td colspan="2" class="empty-state">Memuat laporan laba kotor...</td></tr></tbody></table></div><div id="ledger-panel" class="report-tab-panel"><table class="ledger-table"><thead><tr><th>Tanggal</th><th>Akun</th><th>Debet</th><th>Kredit</th><th>Keterangan</th></tr></thead><tbody id="ledger-body"><tr><td colspan="5" class="empty-state">Memuat buku besar...</td></tr></tbody></table></div></section>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">RINCIAN PER ITEM</p><h2>Detail penjualan</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Pelanggan</th><th>Item</th><th>Jenis</th><th>Jumlah</th><th class="align-right">Subtotal</th></tr></thead><tbody id="reports-body"><tr><td colspan="7" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">DISKON PRODUK</p><h2>Diskon per transaksi</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Pelanggan</th><th>Diskon</th><th class="align-right">Nominal</th></tr></thead><tbody id="discounts-report-body"><tr><td colspan="5" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
+          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">PELUNASAN PIUTANG</p><h2>Kas masuk dari cicilan</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal bayar</th><th>No. transaksi</th><th>Pelanggan</th><th>Cicilan</th><th>Metode</th><th>Catatan</th><th class="align-right">Nominal masuk</th></tr></thead><tbody id="receivable-payments-report-body"><tr><td colspan="7" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
+        </section>
+
+        <section class="view-panel" id="view-receivables">
+          <div class="report-summary-grid receivable-summary-grid">
+            <article class="report-summary overall-summary"><span>Total piutang tersisa</span><strong id="receivable-total">Rp0</strong><small>Saldo tagihan belum lunas</small></article>
+            <article class="report-summary treatment-summary"><span>Pelanggan belum lunas</span><strong id="receivable-customer-count">0</strong><small>Pelanggan dengan transaksi kredit</small></article>
+            <article class="report-summary overdue-summary"><span>Cicilan jatuh tempo</span><strong id="receivable-overdue-count">0</strong><small>Belum dibayar sampai hari ini</small></article>
+          </div>
+          <section class="surface table-surface receivable-table-surface">
+            <div class="section-title-row"><div><p class="eyebrow">TAGIHAN BERJALAN</p><h2>Piutang pelanggan</h2></div><span class="count-chip" id="receivable-row-count">0 transaksi</span></div>
+            <div class="table-wrap"><table><thead><tr><th>No. transaksi</th><th>Nama pelanggan</th><th>Total tagihan</th><th>Sudah dibayar</th><th>Sisa tagihan</th><th>Sisa tenor</th><th>Jatuh tempo berikutnya</th><th>Aksi</th></tr></thead><tbody id="receivables-body"><tr><td colspan="8" class="empty-state">Memuat piutang...</td></tr></tbody></table></div>
+          </section>
+        </section>
+
+        <section class="view-panel" id="view-journal">
+          <section class="surface journal-intro"><div><p class="eyebrow">PEMBUKUAN OTOMATIS</p><h2>Jurnal umum</h2><p>Jurnal terbentuk otomatis dari transaksi penjualan dan harga pokok produk.</p></div><div class="journal-balance"><span>Prinsip pencatatan</span><strong>Debit = Kredit</strong></div></section>
+          <section class="surface table-surface"><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Keterangan</th><th>Akun</th><th class="align-right">Debit</th><th class="align-right">Kredit</th></tr></thead><tbody id="journal-body"><tr><td colspan="6" class="empty-state">Memuat jurnal...</td></tr></tbody></table></div></section>
+        </section>
+      </div>
+      <footer class="footer"><span>© <span id="footer-year"></span> Lsty Klinik</span><span>Sistem Informasi Akuntansi Penjualan Produk & Jasa Treatment</span></footer>
+    </main>
+
+    <div class="modal-backdrop" id="booking-detail-modal" hidden>
+      <section class="modal-panel detail-dialog booking-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-detail-title">
+        <header class="modal-header"><div><p class="eyebrow">RINCIAN JADWAL</p><h2 id="booking-detail-title">Detail booking</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup detail booking">×</button></header>
+        <div class="detail-meta-grid booking-detail-grid">
+          <div><span>No. booking</span><strong id="booking-detail-id">—</strong></div>
+          <div><span>Status</span><strong id="booking-detail-status">—</strong></div>
+          <div><span>Nama pelanggan</span><strong id="booking-detail-customer">—</strong></div>
+          <div><span>Nomor HP</span><strong id="booking-detail-phone">—</strong></div>
+          <div class="booking-detail-address"><span>Alamat</span><strong id="booking-detail-address">—</strong></div>
+          <div><span>Jasa treatment</span><strong id="booking-detail-service">—</strong></div>
+          <div><span>Harga jasa</span><strong id="booking-detail-price">—</strong></div>
+          <div><span>Tanggal</span><strong id="booking-detail-date">—</strong></div>
+          <div><span>Jam</span><strong id="booking-detail-time">—</strong></div>
+          <div><span>Nomor transaksi</span><strong id="booking-detail-sale">—</strong></div>
+          <div><span>Booking dibuat</span><strong id="booking-detail-created">—</strong></div>
+          <div class="booking-detail-note"><span>Catatan</span><strong id="booking-detail-note">—</strong></div>
+        </div>
+        <footer class="modal-actions"><button class="button button-quiet" type="button" data-close-modal>Tutup</button></footer>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="booking-reschedule-modal" hidden>
+      <section class="modal-panel booking-reschedule-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-reschedule-title">
+        <header class="modal-header"><div><p class="eyebrow">PERUBAHAN JADWAL</p><h2 id="booking-reschedule-title">Ubah jadwal booking</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup ubah jadwal">×</button></header>
+        <form id="booking-reschedule-form">
+          <label class="field">Tanggal baru<input id="booking-edit-date" type="date" required></label>
+          <div class="field booking-field"><span>Pilih jam baru</span><div class="booking-slot-grid" id="booking-edit-time-slots" role="group" aria-label="Slot waktu baru"></div></div>
+          <div class="modal-actions"><button class="button button-quiet" type="button" data-close-modal>Batal</button><button class="button button-primary" id="booking-edit-submit" type="submit" disabled>Simpan perubahan</button></div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="sale-checkout-modal" hidden>
+      <section class="modal-panel checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+        <div id="checkout-order-step">
+          <header class="modal-header"><div><p class="eyebrow">TAHAP 1 DARI 2</p><h2 id="checkout-title">Konfirmasi Pesanan</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup konfirmasi">×</button></header>
+          <div class="checkout-customer-summary" id="checkout-customer-summary"></div>
+          <div class="checkout-summary-groups">
+            <section class="checkout-summary-group" id="checkout-products-group" hidden><h3>Produk</h3><div id="checkout-products-list"></div></section>
+            <section class="checkout-summary-group" id="checkout-treatments-group" hidden><h3>Jasa Treatment</h3><div id="checkout-treatments-list"></div></section>
+          </div>
+          <div class="checkout-totals-row"><span>Subtotal</span><strong id="checkout-subtotal">Rp 0</strong></div>
+          <div class="checkout-discount-row discount-line" id="checkout-discount-row" hidden><span id="checkout-discount-label">Diskon produk 15%</span><strong id="checkout-discount-amount">−Rp 0</strong></div>
+          <div class="sale-total checkout-total"><span>Total bayar</span><strong id="checkout-order-total">Rp 0</strong></div>
+          <footer class="modal-actions"><button class="button button-quiet" id="checkout-back-to-cart" type="button">Kembali</button><button class="button button-primary" id="checkout-to-payment" type="button">Lanjut ke pembayaran <span>→</span></button></footer>
+        </div>
+        <section id="checkout-payment-step" hidden>
+          <header class="modal-header"><div><p class="eyebrow">TAHAP 2 DARI 2</p><h2>Pilih Pembayaran</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup pembayaran">×</button></header>
+          <div class="checkout-payment-breakdown">
+            <div class="checkout-totals-row"><span>Subtotal</span><strong id="checkout-payment-subtotal">Rp 0</strong></div>
+            <div class="checkout-totals-row checkout-discount-row discount-line" id="checkout-payment-discount-row" hidden><span id="checkout-payment-discount-label">Diskon produk 15%</span><strong id="checkout-payment-discount-amount">−Rp 0</strong></div>
+            <p class="checkout-payment-total"><span>Total bayar</span><strong id="checkout-payment-total">Rp 0</strong></p>
+          </div>
+          <div class="payment-options" role="group" aria-label="Cara bayar">
+            <button class="payment-option is-active" type="button" data-payment-method="Tunai" aria-pressed="true"><span class="payment-option-icon">●</span><strong>Tunai</strong><small>Bayar langsung dengan uang tunai</small></button>
+            <button class="payment-option" type="button" data-payment-method="Transfer" aria-pressed="false"><span class="payment-option-icon">↗</span><strong>Transfer</strong><small>Pembayaran melalui transfer bank</small></button>
+            <button class="payment-option" type="button" data-payment-method="Kredit" aria-pressed="false"><span class="payment-option-icon">◷</span><strong>Kredit (cicilan)</strong><small>Bayar bertahap sesuai jadwal</small></button>
+          </div>
+          <input id="sale-method" type="hidden" value="Tunai">
+          <section class="installment-fields" id="installment-fields" hidden aria-labelledby="installment-title">
+            <div class="subsection-heading"><div><h3 id="installment-title">Rencana cicilan</h3><p>Tentukan tenor dan tenggat sejak tanggal pembelian.</p></div></div>
+            <div class="form-grid installment-inputs">
+              <label class="field">Tenor cicilan<select id="installment-months"><option value="">Pilih tenor</option><option value="2">2 bulan</option><option value="3">3 bulan</option><option value="6">6 bulan</option><option value="12">12 bulan</option></select></label>
+              <label class="field">Jatuh tempo pertama<input id="installment-first-due" type="date"></label>
+            </div>
+            <div class="installment-preview-wrap"><p class="installment-preview-title">Pratinjau jadwal cicilan</p><div id="installment-preview" class="installment-preview"><span>Pilih tenor untuk melihat jadwal.</span></div></div>
+          </section>
+          <div class="checkout-error notice error" id="checkout-error" role="alert" hidden></div>
+          <footer class="modal-actions"><button class="button button-quiet" id="checkout-back-to-order" type="button">Kembali</button><button class="button button-primary" id="checkout-submit" type="button">Konfirmasi &amp; simpan transaksi</button></footer>
+        </section>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="sale-detail-modal" hidden>
+      <section class="modal-panel detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+        <header class="modal-header"><div><p class="eyebrow">RINCIAN PENJUALAN</p><h2 id="detail-modal-title">Detail transaksi</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup detail">×</button></header>
+        <div class="detail-meta-grid">
+          <div><span>No. transaksi</span><strong id="detail-number">—</strong><span class="badge booking-origin-badge detail-booking-origin-badge" id="detail-booking-badge" hidden>Dari booking</span></div>
+          <div><span>Tanggal</span><strong id="detail-date">—</strong></div>
+          <div><span>Pelanggan</span><strong id="detail-customer">—</strong></div>
+          <div><span>Nomor HP</span><strong id="detail-phone">—</strong></div>
+          <div><span>Metode pembayaran</span><strong id="detail-method">—</strong></div>
+          <div><span>Status pembayaran</span><strong id="detail-status">—</strong></div>
+        </div>
+        <div class="detail-payment-summary"><span>Sisa tagihan</span><strong id="detail-remaining">Rp0</strong></div>
+        <section class="detail-installment-section" id="detail-installment-section" hidden><h3>Jadwal cicilan</h3><div class="table-wrap modal-table-wrap"><table><thead><tr><th>Ke</th><th>Tenggat</th><th>Nominal</th><th>Status</th></tr></thead><tbody id="detail-installments-body"></tbody></table></div></section>
+        <section class="detail-installment-section" id="detail-payment-history-section" hidden><h3>Riwayat pembayaran</h3><div class="table-wrap modal-table-wrap"><table><thead><tr><th>Tanggal bayar</th><th>Cicilan</th><th>Metode</th><th>Nominal</th><th>Catatan</th></tr></thead><tbody id="detail-payment-history-body"></tbody></table></div></section>
+        <div class="table-wrap modal-table-wrap"><table><thead><tr><th>Item</th><th>Jenis</th><th>Harga satuan</th><th>Jumlah</th><th class="align-right">Subtotal</th></tr></thead><tbody id="detail-items-body"></tbody></table></div>
+        <div class="detail-subtotal-row"><span>Subtotal</span><strong id="detail-subtotal">Rp0</strong></div>
+        <div class="detail-discount-row discount-line" id="detail-discount-row" hidden><span id="detail-discount-label">Diskon produk 15%</span><strong id="detail-discount-amount">−Rp 0</strong></div>
+        <div class="modal-total"><span>Total bayar</span><strong id="detail-total">Rp0</strong></div>
+        <footer class="modal-actions"><button class="button button-quiet" type="button" data-close-modal>Tutup</button><button class="button button-primary" type="button" id="detail-open-receipt">Tampilkan nota</button></footer>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="receivable-detail-modal" hidden>
+      <section class="modal-panel detail-dialog" role="dialog" aria-modal="true" aria-labelledby="receivable-detail-title">
+        <header class="modal-header"><div><p class="eyebrow">JADWAL PEMBAYARAN</p><h2 id="receivable-detail-title">Detail piutang</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup jadwal">×</button></header>
+        <p class="receivable-detail-customer" id="receivable-detail-customer"></p>
+        <div class="table-wrap modal-table-wrap"><table><thead><tr><th>Cicilan</th><th>Jatuh tempo</th><th>Nominal</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="receivable-installments-body"></tbody></table></div>
+        <section class="detail-installment-section" id="receivable-payment-history-section" hidden><h3>Riwayat pembayaran</h3><div class="table-wrap modal-table-wrap"><table><thead><tr><th>Tanggal bayar</th><th>Cicilan</th><th>Metode</th><th>Nominal</th><th>Catatan</th></tr></thead><tbody id="receivable-payment-history-body"></tbody></table></div></section>
+        <form id="installment-payment-form" class="installment-payment-form" hidden>
+          <h3 id="installment-payment-title">Bayar cicilan</h3>
+          <div class="form-grid"><label class="field">Cicilan<input id="installment-payment-number" type="text" readonly></label><label class="field">Nominal cicilan<input id="installment-payment-amount" type="text" readonly></label><label class="field">Tanggal bayar<input id="installment-payment-date" type="date" required></label><label class="field">Metode<select id="installment-payment-method" required><option value="Tunai">Tunai</option><option value="Transfer">Transfer</option></select></label><label class="field field-wide">Catatan (opsional)<input id="installment-payment-note" type="text" maxlength="160" placeholder="Catatan pembayaran"></label></div>
+          <div class="payment-confirmation-summary" id="installment-payment-summary"></div>
+          <footer class="modal-actions"><button class="button button-quiet" id="cancel-installment-payment" type="button">Batal</button><button class="button button-primary" type="submit">Konfirmasi Pembayaran</button></footer>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="receipt-modal" hidden>
+      <section class="modal-panel receipt-dialog" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+        <header class="modal-header no-print"><div><p class="eyebrow">BUKTI TRANSAKSI</p><h2>Nota penjualan</h2></div><button class="modal-close" type="button" data-close-modal aria-label="Tutup nota">×</button></header>
+        <article class="receipt-sheet" id="receipt-sheet">
+          <div class="receipt-corner receipt-corner-left" aria-hidden="true">✿</div><div class="receipt-corner receipt-corner-right" aria-hidden="true">✿</div>
+          <p class="receipt-kicker">LSTY KLINIK</p>
+          <h2 id="receipt-title">Terima kasih!</h2>
+          <p class="receipt-thanks">BUKTI PEMBELIAN PRODUK & TREATMENT</p>
+          <div class="receipt-rule"></div>
+          <div class="receipt-info"><span>No. transaksi</span><strong id="receipt-number">—</strong><span>Tanggal</span><strong id="receipt-date">—</strong><span>Pelanggan</span><strong id="receipt-customer">—</strong></div>
+          <table class="receipt-items-table"><thead><tr><th>Item</th><th>Qty</th><th class="align-right">Harga</th></tr></thead><tbody id="receipt-items-body"></tbody></table>
+          <div class="receipt-subtotal-row"><span>Subtotal</span><strong id="receipt-subtotal">Rp0</strong></div>
+          <div class="receipt-discount-row discount-line" id="receipt-discount-row" hidden><span id="receipt-discount-label">Diskon produk 15%</span><strong id="receipt-discount-amount">−Rp 0</strong></div>
+          <div class="receipt-total"><span>Total bayar</span><strong id="receipt-total">Rp0</strong></div>
+          <div class="receipt-payment"><span id="receipt-method">Tunai</span><span id="receipt-status">Lunas</span></div>
+          <p class="receipt-footer">Terima kasih telah mempercayakan perawatan Anda kepada kami.</p>
+          <div class="receipt-barcode" aria-hidden="true"></div>
+          <p class="receipt-brandline">LSTY KLINIK · BEAUTY & CARE</p>
+          <div class="receipt-corner receipt-corner-bottom-left" aria-hidden="true">✿</div><div class="receipt-corner receipt-corner-bottom-right" aria-hidden="true">✿</div>
+        </article>
+        <footer class="modal-actions no-print"><button class="button button-quiet" type="button" id="receipt-open-detail">Kembali ke detail</button><button class="button button-primary" type="button" id="receipt-print">Cetak nota</button></footer>
+      </section>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
