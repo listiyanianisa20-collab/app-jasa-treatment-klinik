@@ -12,8 +12,8 @@
 
 ## Tautan Proyek
 
-- Repository GitHub: [https://github.com/listiyanianisa20-collab/LstyKlinik](https://github.com/listiyanianisa20-collab/LstyKlinik)
-- Demo aplikasi: [https://listiyanianisa20-collab.github.io/LstyKlinik/](https://listiyanianisa20-collab.github.io/LstyKlinik/)
+- Repository GitHub: [https://github.com/listiyanianisa20-collab/app-jasa-treatment-klinik](https://github.com/listiyanianisa20-collab/app-jasa-treatment-klinik)
+- Demo aplikasi: [https://listiyanianisa20-collab.github.io/app-jasa-treatment-klinik/](https://listiyanianisa20-collab.github.io/app-jasa-treatment-klinik/)
 
 ## 1. Deskripsi Singkat
 
