@@ -131,7 +131,7 @@ Teknologi yang digunakan: HTML, CSS, JavaScript, Node.js, dan Supabase (PostgreS
 
 ### GitHub Pages
 
-Buka [demo Lsty Klinik](https://listiyanianisa20-collab.github.io/LstyKlinik/). Halaman root `index.html` mengarahkan browser ke aplikasi pada `frontend/`.
+Buka [demo Lsty Klinik](https://listiyanianisa20-collab.github.io/app-jasa-treatment-klinik/). GitHub Pages menerbitkan repository `app-jasa-treatment-klinik`; halaman root `index.html` mengarahkan browser ke aplikasi pada `frontend/index.html`.
 
 ### Lokal
 
