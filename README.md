@@ -8,9 +8,7 @@
 | NIM | 12030124120060 |
 | Mata Kuliah | Pengkodean dan Pemrograman |
 | Kelas | D |
-| Dosen Pengampu | Dr. Totok Dewayanto, S.E., M.Si., Akt. |
-
-**Disusun untuk memenuhi Tugas Project UTS Pengkodean dan Pemrograman.**
+| Dosen Pengampu | Aulizza Abdul Fanni, S.Ak., M.Sc. |
 
 ## Tautan Proyek
 
