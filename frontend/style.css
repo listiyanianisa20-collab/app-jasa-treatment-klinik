@@ -25,6 +25,12 @@ body {
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.5;
+  font-variant-numeric: lining-nums;
+}
+
+td, .money-cell, .stat-value, .sale-total strong, .report-summary strong, .modal-total strong,
+.checkout-payment-total strong, .receipt-total strong, .journal-balance strong {
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 button, input, select { font: inherit; }
@@ -378,6 +384,15 @@ tbody tr:hover td { background: #fffaf8; }
 .journal-balance span, .journal-balance strong { display: block; }
 .journal-balance span { color: #71816e; font-size: 9px; }
 .journal-balance strong { color: #526e53; font-family: var(--font-display); font-size: 15px; margin-top: 2px; }
+.journal-balance.is-unbalanced { background: #fff0f0; }
+.journal-balance.is-unbalanced span, .journal-balance.is-unbalanced strong { color: #9a4242; }
+.journal-totals { align-items: center; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: flex-end; margin-top: 10px; padding: 12px 4px 2px; }
+.journal-total-item { align-items: center; display: flex; gap: 10px; }
+.journal-total-item span { color: var(--muted); font-size: 10px; }
+.journal-total-item strong { font-size: 11px; }
+.journal-balance-indicator { border-radius: 16px; font-size: 10px; font-weight: 700; padding: 5px 9px; }
+.journal-balance-indicator.is-balanced { background: #edf5ec; color: #52785a; }
+.journal-balance-indicator.is-unbalanced { background: #fff0f0; color: #9a4242; }
 .notice { border: 1px solid #f0cdd9; border-radius: 6px; color: #774252; font-size: 12px; margin: -11px 0 18px; padding: 10px 13px; }
 .notice.success { background: #f0f6ee; border-color: #d4e5d1; color: #49664b; }
 .notice.error { background: #fff0f0; border-color: #efcccc; color: #9a4242; }
@@ -494,6 +509,17 @@ tbody tr:hover td { background: #fffaf8; }
 .report-tab-panel { display: none; }
 .report-tab-panel.is-active { display: block; }
 .ledger-table { min-width: 420px; }
+.profit-loss-summary-row td { background: #fff8f6; font-weight: 700; }
+.profit-loss-result td { background: #edf5ec; border-top: 2px solid #dce9da; color: #52785a; font-weight: 700; }
+.ledger-period-note { color: var(--muted); font-size: 10px; margin: -8px 0 12px; }
+.ledger-account-list { display: grid; gap: 14px; }
+.ledger-account-block { border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+.ledger-account-title { background: #fff8f6; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 12px; margin: 0; padding: 10px 12px; }
+.ledger-account-table { min-width: 720px; }
+.ledger-opening-row td { background: #faf7f5; font-weight: 700; }
+.ledger-opening-row td.ledger-negative-balance { background: #fff0f0; color: #9a4242; }
+.ledger-total-row td { background: #fff8f6; font-weight: 700; }
+.ledger-negative-balance { background: #fff0f0; color: #9a4242; font-weight: 700; }
 .detail-payment-summary {
   align-items: center;
   background: #fff3f7;
@@ -581,6 +607,8 @@ tbody tr:hover td { background: #fffaf8; }
   .report-summary { min-height: 95px; padding: 12px 14px; }
   .report-summary strong { font-size: 20px; }
   .journal-intro { align-items: flex-start; flex-direction: column; gap: 13px; }
+  .journal-totals { align-items: stretch; flex-direction: column; gap: 8px; }
+  .journal-total-item { justify-content: space-between; }
   .footer { align-items: flex-start; flex-direction: column; gap: 4px; padding: 13px 15px 18px; }
 }
 

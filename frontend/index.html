@@ -238,7 +238,13 @@
           <div class="report-summary-grid report-discount-summary-grid"><article class="report-summary discount-summary"><span>Total diskon</span><strong id="report-discount-total">Rp0</strong><small>Total diskon otomatis per transaksi</small></article><article class="report-summary overall-summary"><span>Penjualan bersih</span><strong id="report-net-total">Rp0</strong><small>Penjualan kotor dikurangi diskon</small></article></div>
           <div class="report-summary-grid receivable-cash-summary"><article class="report-summary treatment-summary"><span>Kas masuk pelunasan piutang</span><strong id="report-receivable-cash-total">Rp0</strong><small>Tidak menambah pendapatan penjualan</small></article></div>
           <div class="report-actions"><button class="button button-outline" id="export-report-csv" type="button">Export Excel</button><button class="button button-quiet" id="print-report-pdf" type="button">Print PDF</button></div>
-          <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">LAPORAN KEUANGAN</p><h2>Labarugi & Buku Besar</h2></div></div><div class="tab-group"><button class="tab-button is-active" data-report-tab="profit-loss" type="button">Laba Kotor</button><button class="tab-button" data-report-tab="ledger" type="button">Buku Besar</button></div><div id="profit-loss-panel" class="report-tab-panel is-active"><table class="ledger-table"><thead><tr><th>Akun</th><th>Nominal</th></tr></thead><tbody id="profit-loss-body"><tr><td colspan="2" class="empty-state">Memuat laporan laba kotor...</td></tr></tbody></table></div><div id="ledger-panel" class="report-tab-panel"><table class="ledger-table"><thead><tr><th>Tanggal</th><th>Akun</th><th>Debet</th><th>Kredit</th><th>Keterangan</th></tr></thead><tbody id="ledger-body"><tr><td colspan="5" class="empty-state">Memuat buku besar...</td></tr></tbody></table></div></section>
+          <section class="surface table-surface">
+            <div class="section-title-row"><div><p class="eyebrow">LAPORAN KEUANGAN</p><h2>Labarugi & Buku Besar</h2></div></div>
+            <p class="ledger-period-note">Saldo dihitung dari transaksi dalam periode yang dipilih.</p>
+            <div class="tab-group"><button class="tab-button is-active" data-report-tab="profit-loss" type="button">Laba Kotor</button><button class="tab-button" data-report-tab="ledger" type="button">Buku Besar</button></div>
+            <div id="profit-loss-panel" class="report-tab-panel is-active"><table class="ledger-table"><thead><tr><th>Akun</th><th>Nominal</th></tr></thead><tbody id="profit-loss-body"><tr><td colspan="2" class="empty-state">Memuat laporan laba kotor...</td></tr></tbody></table></div>
+            <div id="ledger-panel" class="report-tab-panel"><div id="ledger-body" class="ledger-account-list"><p class="empty-state">Memuat buku besar...</p></div></div>
+          </section>
           <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">RINCIAN PER ITEM</p><h2>Detail penjualan</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Pelanggan</th><th>Item</th><th>Jenis</th><th>Jumlah</th><th class="align-right">Subtotal</th></tr></thead><tbody id="reports-body"><tr><td colspan="7" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
           <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">DISKON PRODUK</p><h2>Diskon per transaksi</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Pelanggan</th><th>Diskon</th><th class="align-right">Nominal</th></tr></thead><tbody id="discounts-report-body"><tr><td colspan="5" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
           <section class="surface table-surface"><div class="section-title-row"><div><p class="eyebrow">PELUNASAN PIUTANG</p><h2>Kas masuk dari cicilan</h2></div></div><div class="table-wrap"><table><thead><tr><th>Tanggal bayar</th><th>No. transaksi</th><th>Pelanggan</th><th>Cicilan</th><th>Metode</th><th>Catatan</th><th class="align-right">Nominal masuk</th></tr></thead><tbody id="receivable-payments-report-body"><tr><td colspan="7" class="empty-state">Pilih periode laporan</td></tr></tbody></table></div></section>
@@ -257,8 +263,15 @@
         </section>
 
         <section class="view-panel" id="view-journal">
-          <section class="surface journal-intro"><div><p class="eyebrow">PEMBUKUAN OTOMATIS</p><h2>Jurnal umum</h2><p>Jurnal terbentuk otomatis dari transaksi penjualan dan harga pokok produk.</p></div><div class="journal-balance"><span>Prinsip pencatatan</span><strong>Debit = Kredit</strong></div></section>
-          <section class="surface table-surface"><div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Keterangan</th><th>Akun</th><th class="align-right">Debit</th><th class="align-right">Kredit</th></tr></thead><tbody id="journal-body"><tr><td colspan="6" class="empty-state">Memuat jurnal...</td></tr></tbody></table></div></section>
+          <section class="surface journal-intro"><div><p class="eyebrow">PEMBUKUAN OTOMATIS</p><h2>Jurnal umum</h2><p>Jurnal terbentuk otomatis dari transaksi penjualan dan harga pokok produk.</p></div><div class="journal-balance is-balanced" id="journal-balance"><span>Status jurnal</span><strong id="journal-balance-state">Memuat...</strong></div></section>
+          <section class="surface table-surface">
+            <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Keterangan</th><th>Akun</th><th class="align-right">Debit</th><th class="align-right">Kredit</th></tr></thead><tbody id="journal-body"><tr><td colspan="6" class="empty-state">Memuat jurnal...</td></tr></tbody></table></div>
+            <div class="journal-totals" aria-live="polite">
+              <div class="journal-total-item"><span>Total Debit</span><strong id="journal-total-debit">Rp0</strong></div>
+              <div class="journal-total-item"><span>Total Kredit</span><strong id="journal-total-credit">Rp0</strong></div>
+              <span class="journal-balance-indicator is-balanced" id="journal-balance-indicator">Memuat...</span>
+            </div>
+          </section>
         </section>
       </div>
       <footer class="footer"><span>© <span id="footer-year"></span> Lsty Klinik</span><span>Sistem Informasi Akuntansi Penjualan Produk & Jasa Treatment</span></footer>

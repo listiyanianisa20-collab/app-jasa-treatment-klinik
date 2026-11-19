@@ -1,7 +1,5 @@
 # Lsty Klinik - Sistem Informasi Akuntansi Penjualan Produk dan Jasa Treatment pada Klinik Kecantikan
 
-Lsty Klinik adalah aplikasi demo Sistem Informasi Akuntansi untuk membantu pencatatan penjualan produk dan jasa treatment pada klinik kecantikan. Aplikasi ini mengelola data pelanggan, katalog, transaksi, serta pencatatan dan laporan keuangan. Data utama disimpan menggunakan Supabase (PostgreSQL), sementara server Node.js menyediakan antarmuka untuk penggunaan lokal.
-
 ## Identitas Tugas
 
 | Keterangan | Detail |
@@ -19,57 +17,94 @@ Lsty Klinik adalah aplikasi demo Sistem Informasi Akuntansi untuk membantu penca
 - Repository GitHub: [https://github.com/listiyanianisa20-collab/LstyKlinik](https://github.com/listiyanianisa20-collab/LstyKlinik)
 - Demo aplikasi: [https://listiyanianisa20-collab.github.io/LstyKlinik/](https://listiyanianisa20-collab.github.io/LstyKlinik/)
 
-## Demo
+## 1. Deskripsi Singkat
 
-[Buka demo Lsty Klinik](https://listiyanianisa20-collab.github.io/LstyKlinik/)
+Lsty Klinik adalah sistem kasir untuk mencatat penjualan produk dan jasa treatment klinik kecantikan, mengelola booking dan piutang, serta menghasilkan pencatatan keuangan secara otomatis.
 
-Situs demo memakai login admin melalui Supabase Auth. Masuk dengan akun admin yang sudah dibuat pada proyek Supabase.
+## 2. Fitur Utama
 
-## Akses Aplikasi
+- Kasir dengan katalog produk dan jasa treatment serta keranjang belanja.
+- Diskon produk otomatis sesuai aturan transaksi.
+- Pencocokan foto item secara otomatis dari nama item dan gambar di `frontend/images/`.
+- Booking jasa treatment.
+- Piutang dan jadwal pembayaran cicilan.
+- Jurnal umum dan buku besar per akun, termasuk saldo awal.
+- Laporan laba kotor.
+- Nota transaksi yang dapat dicetak.
+- Ekspor laporan ke CSV dan fitur print.
 
-Aplikasi menggunakan Supabase Auth untuk autentikasi admin. Buat akun admin melalui Supabase Dashboard pada menu **Authentication → Users**; aplikasi tidak menyediakan pendaftaran akun.
+## 3. Alur Akuntansi
 
-Kredensial demo untuk diisi sendiri:
+Jurnal penjualan mencatat nilai kotor pendapatan; diskon dicatat terpisah sebagai kontra-pendapatan. Contoh jurnal:
 
-- Email: `[EMAIL_ADMIN_DEMO]`
-- Password: `[PASSWORD_ADMIN_DEMO]`
+| Peristiwa | Debit | Kredit |
+|---|---|---|
+| Penjualan tunai | Kas | Pendapatan Penjualan Produk dan/atau Pendapatan Jasa Treatment |
+| Penjualan transfer | Bank | Pendapatan Penjualan Produk dan/atau Pendapatan Jasa Treatment |
+| Penjualan kredit | Piutang Usaha | Pendapatan Penjualan Produk dan/atau Pendapatan Jasa Treatment |
+| Pelunasan cicilan | Kas atau Bank | Piutang Usaha |
+| Diskon penjualan | Diskon Penjualan | Pendapatan sebesar nilai kotor (jurnal pendapatan tetap mencatat nilai kotor) |
+| HPP produk | Beban Pokok Penjualan | Persediaan Produk |
 
-Jangan menyimpan password sungguhan ke repository.
+Pelunasan cicilan mengurangi Piutang Usaha dan **bukan pendapatan baru**. Diskon hanya berlaku untuk produk dan dicatat terpisah dari pendapatan kotor.
 
-## Fitur Utama
+**Penjualan Bersih = Pendapatan Kotor - Diskon**
 
-- CRUD pelanggan serta katalog produk dan jasa treatment.
-- Tampilan kasir dengan katalog Produk dan Jasa Treatment terpisah, keranjang, konfirmasi pesanan, dan pilihan pembayaran Tunai, Transfer, atau Kredit/cicilan.
-- Diskon otomatis 15% jika subtotal produk dalam satu transaksi lebih dari Rp 500.000. Diskon hanya berlaku untuk produk dan dicatat pada akun **Diskon Penjualan**.
-- Pencocokan foto item otomatis dari slug nama item di `frontend/images/` (JPG, PNG, atau WebP), dengan placeholder jika foto tidak tersedia.
-- Booking jasa treatment pada Senin–Sabtu pukul 09.00–20.00, dengan slot per jam (slot terakhir pukul 19.00), maksimal dua booking aktif per slot, dan tanpa DP. Pembayaran diproses melalui transaksi kasir.
-- Pengelolaan piutang, jadwal cicilan, dan pencatatan pembayaran cicilan.
-- Jurnal umum, Buku Besar, dan Laporan Laba Kotor yang terbentuk otomatis dari transaksi.
-- Riwayat dan detail transaksi, nota yang dapat dicetak, laporan penjualan dan pelunasan piutang berdasarkan periode.
-- Ekspor laporan ke CSV dan pencetakan laporan melalui dialog cetak browser atau simpan sebagai PDF.
+**Laba Kotor = Penjualan Bersih - Beban Pokok Penjualan**
 
-### Kebijakan dan ruang lingkup
+HPP disimpan sebagai snapshot pada setiap detail transaksi. Karena itu, perubahan harga pokok item tidak mengubah laporan transaksi lama. Nominal cicilan dibulatkan ke rupiah, dan sisa pembulatan ditempatkan pada cicilan terakhir.
 
-- Transaksi yang sudah tercatat bersifat final (tidak dapat diubah atau dibatalkan) untuk menjaga jejak audit.
-- Sistem ditujukan untuk operasional kasir. Pencatatan beban operasional dan pembelian stok berada di luar ruang lingkup aplikasi.
+## 4. Aturan Bisnis
 
-## Struktur Folder
+- Diskon 15% hanya berlaku bila subtotal produk **lebih dari Rp 500.000 per transaksi**.
+- Booking tersedia Senin–Sabtu pukul 09.00–20.00 dengan slot per jam; slot terakhir dimulai pukul 19.00. Maksimal dua booking aktif per slot dan booking tidak memerlukan DP.
+- Tanggal transaksi tidak boleh melewati hari ini.
+- Transaksi penjualan bersifat final: tidak tersedia edit, pembatalan, atau refund.
+- Database menjaga finalitas transaksi. Hak tulis langsung pada `penjualan`, `detail_penjualan`, dan `booking` dicabut; transaksi dibuat atau diproses melalui fungsi database yang disediakan.
+
+## 5. Batasan Sistem
+
+- Pencatatan pembelian stok dan beban operasional tidak tersedia di luar fungsi kasir.
+- Persediaan Produk dapat bernilai negatif di Buku Besar karena sistem hanya mencatat pengurangan persediaan akibat penjualan; saldo awal dan pembelian stok tidak dicatat.
+- Laporan keuangan berhenti pada Laba Kotor dan belum mencakup beban operasional maupun laba bersih.
+
+## 6. Struktur Folder dan ERD
+
+Struktur berikut mengikuti berkas yang ada di repository:
 
 ```text
 .
-├── index.html                 # Halaman pengarah ke aplikasi frontend
-├── frontend/
-│   ├── index.html             # Halaman aplikasi
-│   ├── script.js              # Logika aplikasi dan koneksi ke Supabase
-│   ├── style.css              # Gaya dan tata letak antarmuka
-│   └── images/                # Foto item yang dicocokkan otomatis dari nama item
-└── backend/
-    ├── app.js                 # Server Node.js untuk menyajikan frontend secara lokal
-    ├── data.json              # Data contoh yang disertakan untuk referensi/demo
-    └── database.sql           # Skema, view, fungsi, kebijakan authenticated, dan data contoh Supabase
+├── .gitignore
+├── index.html
+├── README.md
+├── backend/
+│   ├── app.js
+│   ├── data.json
+│   └── database.sql
+└── frontend/
+    ├── index.html
+    ├── script.js
+    ├── style.css
+    ├── welcome-hero.png
+    └── images/
+        ├── acne-spot-gel.jpg
+        ├── body-lotion-brightening.jpg
+        ├── body-spa-scrub.jpg
+        ├── facial-acne-care.jpg
+        ├── facial-glow.jpg
+        ├── facial-wash-gentle.jpg
+        ├── hair-spa.jpg
+        ├── laser-rejuvenation.jpg
+        ├── lash-lift.jpg
+        ├── lip-balm-spf-15.jpg
+        ├── micellar-water.jpg
+        ├── night-cream-renewal.jpg
+        ├── peeling-treatment.jpg
+        ├── serum-brightening.jpg
+        ├── sheet-mask.jpg
+        ├── sunscreen-spf-50.jpg
+        └── toner.jpg
 ```
-
-## ERD dan Entitas
 
 Database memiliki **5 entitas (tabel)**:
 
@@ -92,38 +127,37 @@ Relasi antartabel:
 
 Pada tabel `penjualan`, `subtotal` menyimpan nilai kotor transaksi, `diskon_persen` dan `diskon_nominal` menyimpan diskon produk, sedangkan `total` menyimpan jumlah bersih yang dibayar pelanggan. Jadwal dan pembayaran cicilan disimpan pada kolom `jadwal_cicilan` (JSONB) dan tenor pada kolom `tenor`. Jurnal umum, laporan, dan piutang disajikan lewat *view* database, bukan tabel tambahan.
 
-## Teknologi
+## 7. Teknologi dan Cara Menjalankan
 
-- HTML
-- CSS
-- JavaScript
-- Node.js
-- Supabase (PostgreSQL)
+Teknologi yang digunakan: HTML, CSS, JavaScript, Node.js, dan Supabase (PostgreSQL).
 
-## Cara Menjalankan
+### GitHub Pages
 
-### a. Melalui GitHub Pages
+Buka [demo Lsty Klinik](https://listiyanianisa20-collab.github.io/LstyKlinik/). Halaman root `index.html` mengarahkan browser ke aplikasi pada `frontend/`.
 
-Buka [halaman demo Lsty Klinik](https://listiyanianisa20-collab.github.io/LstyKlinik/) dan masuk menggunakan email serta password akun admin Supabase Auth.
+### Lokal
 
-### b. Menjalankan secara lokal
-
-Pastikan Node.js sudah terpasang. Dari folder utama proyek, jalankan:
+Pastikan Node.js telah terpasang, lalu jalankan dari folder utama proyek:
 
 ```bash
 node backend/app.js
 ```
 
-Kemudian buka [http://localhost:3000](http://localhost:3000) di browser dan masuk menggunakan akun admin Supabase Auth. Server lokal ini menyajikan frontend; agar data aplikasi dapat digunakan, siapkan database dan koneksi Supabase seperti pada langkah berikut.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-### c. Menyiapkan database Supabase
+### Menyiapkan Supabase
 
-1. Buka **SQL Editor** pada proyek Supabase, lalu jalankan isi file `backend/database.sql`.
-2. Pastikan `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di bagian atas `frontend/script.js` menggunakan URL proyek dan *publishable key* Supabase yang sesuai.
-3. Buat akun admin di Supabase Dashboard melalui **Authentication → Users**; aplikasi tidak menyediakan pendaftaran akun. Masuk dengan email dan password akun tersebut.
+1. Jalankan isi `backend/database.sql` melalui **SQL Editor** pada proyek Supabase.
+2. Isi `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di bagian atas `frontend/script.js` dengan URL proyek dan *publishable key*.
+3. Buat akun admin melalui **Authentication > Users**, lalu masuk menggunakan akun tersebut.
 
-Jangan mencantumkan kunci Supabase di README atau membagikan kunci rahasia.
+## 8. Akses Demo
 
-## Catatan Keamanan
+Akun demo untuk dosen diberikan terpisah melalui laporan/pesan.
 
-Aplikasi menggunakan *publishable key* di browser dan token Supabase Auth untuk mengakses REST API. RLS dan grant database membatasi akses data ke role `authenticated`; jangan menambahkan kebijakan untuk `anon` atau menaruh *secret key* di frontend. Buat akun admin secara terkontrol dan nonaktifkan pendaftaran publik di konfigurasi Supabase Auth.
+## 9. Catatan Keamanan
+
+- Frontend hanya menggunakan *publishable key* Supabase.
+- RLS dan grant membatasi akses database untuk role `authenticated`.
+- Pendaftaran user publik dimatikan; buat akun admin secara terkontrol melalui Supabase Authentication.
+- *Secret key* tidak pernah disimpan di repository.

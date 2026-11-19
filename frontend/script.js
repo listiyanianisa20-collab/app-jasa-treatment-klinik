@@ -50,6 +50,15 @@ const BOOKING_KAPASITAS_SLOT = 2;
 const BOOKING_ZONA_WAKTU = "Asia/Jakarta";
 const itemPhotoCache = new Map();
 const itemPhotoExtensions = ["jpg", "png", "webp"];
+const LEDGER_CREDIT_NORMAL_ACCOUNTS = new Set(["Pendapatan Jasa Treatment", "Pendapatan Penjualan Produk"]);
+const LEDGER_NOMINAL_ACCOUNTS = new Set([
+  "Pendapatan",
+  "Pendapatan Jasa Treatment",
+  "Pendapatan Penjualan Produk",
+  "Diskon Penjualan",
+  "Beban Pokok Penjualan"
+]);
+let ledgerOpeningBalances = new Map();
 const viewNames = {
   dashboard: "Utama",
   transactions: "Transaksi",
@@ -90,6 +99,10 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>\"']/g, (characte
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[character]));
 const formatMoney = (value) => money.format(Number(value) || 0);
+const toCents = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+};
 const formatDate = (value) => value ? dateFormatter.format(new Date(`${String(value).slice(0, 10)}T00:00:00`)) : "—";
 const bookingClock = () => {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
@@ -622,7 +635,7 @@ async function api(path, options = {}) {
   }
   if (pathname === "/api/receivables" && method === "GET") {
     const sales = (await fetchSupabaseSales()).filter((sale) =>
-      sale.status_transaksi === "Aktif" && sale.status_pembayaran === "Belum Lunas"
+      sale.status_pembayaran === "Belum Lunas"
     );
     const overdueCount = sales.reduce((count, sale) => count + sale.jadwal_cicilan.filter((installment) =>
       installment.status !== "Lunas" && installment.tenggat < todayIso()
@@ -670,18 +683,25 @@ async function api(path, options = {}) {
     }
     const pendapatan = totals.get("Pendapatan") || 0;
     const diskon = totals.get("Diskon Penjualan") || 0;
-    const hpp = totals.get("Harga Pokok Penjualan") || 0;
+    const hpp = totals.get("Beban Pokok Penjualan") || totals.get("Harga Pokok Penjualan") || 0;
     return { rows: [
       { akun: "Pendapatan", nilai: pendapatan },
       { akun: "Diskon Penjualan", nilai: diskon },
-      { akun: "Harga Pokok Penjualan", nilai: hpp },
+      { akun: "Beban Pokok Penjualan", nilai: hpp },
       { akun: "LABA KOTOR", nilai: pendapatan - diskon - hpp }
     ] };
   }
 
   if (pathname === "/api/finance/ledger" || pathname === "/api/journal") {
-    const query = dateFilters(url.searchParams);
+    const before = url.searchParams.get("before");
+    const query = before
+      ? new URLSearchParams({ select: "*", tanggal: `lt.${before}` })
+      : dateFilters(url.searchParams);
     query.set("order", "tanggal.asc,id_penjualan.asc,urutan.asc");
+    for (const parameter of ["offset", "limit"]) {
+      const value = url.searchParams.get(parameter);
+      if (value) query.set(parameter, value);
+    }
     return supabaseRequest(`view_buku_besar?${query}`);
   }
 
@@ -690,7 +710,7 @@ async function api(path, options = {}) {
       fetchSupabaseSales(),
       supabaseRequest(`view_booking?select=id_booking&tanggal=eq.${bookingToday()}&status=eq.Dijadwalkan`)
     ]);
-    const sales = allSales.filter((sale) => sale.status_transaksi === "Aktif");
+    const sales = allSales;
     const payments = sales.flatMap((sale) => sale.payments.map((payment) => ({
       tanggal: payment.tanggal,
       id_penjualan: sale.id_penjualan,
@@ -807,7 +827,7 @@ function getFilteredSales() {
   const q = state.salesQuery.toLowerCase();
   return state.sales.filter((sale) => {
     const customerName = sale.pelanggan?.nama || "";
-    const matchesQuery = !q || [sale.id_penjualan, customerName, sale.metode_pembayaran, sale.status_pembayaran, sale.status_transaksi, sale.tanggal].join(" ").toLowerCase().includes(q);
+    const matchesQuery = !q || [sale.id_penjualan, customerName, sale.metode_pembayaran, sale.status_pembayaran, sale.tanggal].join(" ").toLowerCase().includes(q);
     const matchesStatus = !state.salesStatusFilter || sale.status_pembayaran === state.salesStatusFilter;
     return matchesQuery && matchesStatus;
   });
@@ -971,7 +991,7 @@ function renderSales() {
     <td class="action-cell"><button class="row-action" data-sale-action="detail" data-id="${escapeHtml(sale.id_penjualan)}">Detail</button><button class="row-action" data-sale-action="receipt" data-id="${escapeHtml(sale.id_penjualan)}">Nota</button></td>
   </tr>`).join("") : emptyRow(7, "Tidak ada transaksi yang cocok.");
 
-  const recentSales = state.sales.filter((sale) => sale.status_transaksi === "Aktif").slice(0, 6);
+  const recentSales = state.sales.slice(0, 6);
   recentBody.innerHTML = recentSales.length ? recentSales.map((sale) => `<tr>
     <td class="id-cell">#${escapeHtml(sale.id_penjualan)}</td><td>${escapeHtml(sale.pelanggan?.nama || "Pelanggan")}</td>
     <td>${formatDate(sale.tanggal)}</td><td>${paymentBadge(sale.status_pembayaran)}</td>
@@ -1330,7 +1350,7 @@ function startBookingPayment(row) {
     }
     state.cart = [{ ...savedService, jumlah: 1 }];
     byId("sale-customer").value = String(row.id_pelanggan);
-    byId("sale-date").value = bookingToday();
+    setSaleDateToToday();
     renderCart();
     setView("transactions");
     showNotice(`Transaksi #${state.bookingPayment.id_penjualan} tersimpan. Konfirmasi kembali untuk menautkannya ke booking.`);
@@ -1346,7 +1366,7 @@ function startBookingPayment(row) {
   state.cart = [{ ...service, jumlah: 1 }];
   state.catalogQuantities = {};
   byId("sale-customer").value = String(row.id_pelanggan);
-  byId("sale-date").value = bookingToday();
+  setSaleDateToToday();
   byId("installment-months").value = "";
   byId("installment-first-due").value = addMonths(bookingToday(), 1);
   selectPaymentMethod("Tunai");
@@ -1679,35 +1699,93 @@ async function openSaleReceipt(id = state.activeSale?.id_penjualan) {
   openModal(byId("receipt-modal"));
 }
 
+function calculateLedgerOpeningBalances(rows) {
+  const balances = new Map();
+  rows.forEach((row) => {
+    const account = String(row.akun ?? "Akun lainnya");
+    if (LEDGER_NOMINAL_ACCOUNTS.has(account)) return;
+    const debit = toCents(row.debit);
+    const credit = toCents(row.kredit);
+    const movement = LEDGER_CREDIT_NORMAL_ACCOUNTS.has(account) ? credit - debit : debit - credit;
+    balances.set(account, (balances.get(account) || 0) + movement);
+  });
+  return new Map([...balances].filter(([, balance]) => balance !== 0));
+}
+
+async function fetchLedgerOpeningBalances(start) {
+  const balances = new Map();
+  const pageSize = 1000;
+  let offset = 0;
+  while (true) {
+    const params = new URLSearchParams({
+      before: start,
+      offset: String(offset),
+      limit: String(pageSize)
+    });
+    const rows = await api(`/api/finance/ledger?${params.toString()}`);
+    if (!Array.isArray(rows)) throw new Error("Data saldo awal buku besar tidak valid.");
+    const pageBalances = calculateLedgerOpeningBalances(rows);
+    pageBalances.forEach((balance, account) => {
+      balances.set(account, (balances.get(account) || 0) + balance);
+    });
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+  }
+  return new Map([...balances].filter(([, balance]) => balance !== 0));
+}
+
 async function loadReport() {
   const start = byId("report-start").value;
   const end = byId("report-end").value;
   const params = new URLSearchParams();
   if (start) params.set("start", start);
   if (end) params.set("end", end);
-  const [report, reportDiscounts, profitLoss, ledger, receivablePaymentReport] = await Promise.all([
+  const openingBalancesRequest = start ? fetchLedgerOpeningBalances(start) : Promise.resolve(new Map());
+  const [report, reportDiscounts, profitLoss, ledger, receivablePaymentReport, openingBalances] = await Promise.all([
     api(`/api/reports?${params.toString()}`),
     api(`/api/reports/discounts?${params.toString()}`),
     api(`/api/finance/profit-loss?${params.toString()}`),
     api(`/api/finance/ledger?${params.toString()}`),
-    api(`/api/reports/receivable-payments?${params.toString()}`)
+    api(`/api/reports/receivable-payments?${params.toString()}`),
+    openingBalancesRequest
   ]);
   state.report = report;
   state.reportDiscounts = reportDiscounts;
   state.reportFinance = { profitLoss, ledger };
+  ledgerOpeningBalances = openingBalances;
   state.receivablePaymentReport = receivablePaymentReport;
   renderReport();
 }
 
 function renderProfitLoss() {
   const body = byId("profit-loss-body");
-  const rows = state.reportFinance.profitLoss?.rows || [];
-  if (!rows.length) {
+  const reportRows = state.report || [];
+  const profitLossRows = state.reportFinance.profitLoss?.rows || [];
+  const discountRows = state.reportDiscounts || [];
+  if (!reportRows.length && !profitLossRows.length && !discountRows.length) {
     body.innerHTML = emptyRow(2, "Tidak ada data laba rugi.");
     return;
   }
-  body.innerHTML = rows.map((row) => `<tr>
-    <td>${escapeHtml(row.akun === "Harga Pokok Penjualan" ? "HPP" : row.akun === "LABA KOTOR" ? "Laba Kotor" : row.akun)}</td>
+  const sum = (rows) => rows.reduce((total, row) => total + Number(row.subtotal || 0), 0);
+  const productRevenue = sum(reportRows.filter((row) => row.jenis === "Produk"));
+  const serviceRevenue = sum(reportRows.filter((row) => row.jenis === "Jasa Treatment"));
+  const grossRevenue = productRevenue + serviceRevenue;
+  const discount = discountRows.reduce((total, row) => total + Number(row.diskon_nominal || 0), 0);
+  const netRevenue = grossRevenue - discount;
+  const hpp = profitLossRows
+    .filter((row) => ["Beban Pokok Penjualan", "Harga Pokok Penjualan", "HPP"].includes(row.akun))
+    .reduce((total, row) => total + Number(row.nilai || 0), 0);
+  const rows = [
+    { akun: "Pendapatan Produk", nilai: productRevenue },
+    { akun: "Pendapatan Jasa", nilai: serviceRevenue },
+    { akun: "Total Pendapatan Kotor", nilai: grossRevenue, className: "profit-loss-summary-row" },
+    { akun: "Diskon Penjualan", nilai: discount },
+    { akun: "Penjualan Bersih", nilai: netRevenue, className: "profit-loss-summary-row" },
+    { akun: "Beban Pokok Penjualan", nilai: hpp },
+    { akun: "Laba Kotor", nilai: netRevenue - hpp, className: "profit-loss-result" }
+  ];
+  body.innerHTML = rows.map((row) => `<tr${row.className ? ` class="${row.className}"` : ""}>
+    <td>${escapeHtml(row.akun)}</td>
     <td class="money-cell">${formatMoney(row.nilai)}</td>
   </tr>`).join("");
 }
@@ -1715,17 +1793,83 @@ function renderProfitLoss() {
 function renderLedger() {
   const body = byId("ledger-body");
   const rows = state.reportFinance.ledger || [];
-  if (!rows.length) {
-    body.innerHTML = emptyRow(5, "Tidak ada transaksi buku besar.");
+  const periodNote = document.querySelector(".ledger-period-note");
+  if (periodNote) {
+    periodNote.textContent = "Saldo awal dihitung dari transaksi sebelum periode yang dipilih (khusus akun neraca). Persediaan Produk bisa bernilai negatif karena pembelian stok tidak dicatat dalam sistem ini.";
+  }
+  if (!rows.length && !ledgerOpeningBalances.size) {
+    body.innerHTML = '<p class="empty-state">Tidak ada transaksi buku besar.</p>';
     return;
   }
-  body.innerHTML = rows.map((row) => `<tr>
-    <td>${formatDate(row.tanggal)}</td>
-    <td>${escapeHtml(row.akun)}</td>
-    <td class="money-cell">${Number(row.debit) ? formatMoney(row.debit) : "—"}</td>
-    <td class="money-cell">${Number(row.kredit) ? formatMoney(row.kredit) : "—"}</td>
-    <td>${escapeHtml(row.keterangan || "—")}</td>
-  </tr>`).join("");
+  const accountOrder = [
+    "Kas",
+    "Bank",
+    "Piutang Usaha",
+    "Persediaan Produk",
+    "Diskon Penjualan",
+    "Beban Pokok Penjualan",
+    "Pendapatan Jasa Treatment",
+    "Pendapatan Penjualan Produk"
+  ];
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const account = String(row.akun ?? "Akun lainnya");
+    const accountRows = grouped.get(account) || [];
+    accountRows.push(row);
+    grouped.set(account, accountRows);
+  });
+  ledgerOpeningBalances.forEach((balance, account) => {
+    if (balance !== 0 && !grouped.has(account)) grouped.set(account, []);
+  });
+  const accounts = [
+    ...accountOrder.filter((account) => grouped.has(account)),
+    ...[...grouped.keys()].filter((account) => !accountOrder.includes(account)).sort((left, right) => left.localeCompare(right, "id"))
+  ];
+
+  body.innerHTML = accounts.map((account) => {
+    const accountRows = [...grouped.get(account)].sort((left, right) =>
+      String(left.tanggal ?? "").localeCompare(String(right.tanggal ?? ""))
+      || (Number(left.id_penjualan) || 0) - (Number(right.id_penjualan) || 0)
+      || (Number(left.urutan) || 0) - (Number(right.urutan) || 0));
+    const debitNormal = !LEDGER_CREDIT_NORMAL_ACCOUNTS.has(account);
+    let balance = ledgerOpeningBalances.get(account) || 0;
+    const openingBalanceClass = balance < 0 ? " ledger-negative-balance" : "";
+    const openingRow = `<tr class="ledger-opening-row">
+      <td>—</td><td>—</td><td>${escapeHtml("Saldo awal")}</td>
+      <td class="money-cell align-right">—</td><td class="money-cell align-right">—</td>
+      <td class="money-cell align-right${openingBalanceClass}">${escapeHtml(formatMoney(balance / 100))}</td>
+    </tr>`;
+    let totalDebit = 0;
+    let totalCredit = 0;
+    const tableRows = accountRows.map((row) => {
+      const debit = toCents(row.debit);
+      const credit = toCents(row.kredit);
+      totalDebit += debit;
+      totalCredit += credit;
+      balance += debitNormal ? debit - credit : credit - debit;
+      const transactionId = row.id_penjualan == null ? "—" : `#${row.id_penjualan}`;
+      const balanceClass = balance < 0 ? " ledger-negative-balance" : "";
+      return `<tr>
+        <td>${escapeHtml(formatDate(row.tanggal))}</td>
+        <td class="id-cell">${escapeHtml(transactionId)}</td>
+        <td>${escapeHtml(row.keterangan || "—")}</td>
+        <td class="money-cell align-right">${escapeHtml(formatMoney(debit / 100))}</td>
+        <td class="money-cell align-right">${escapeHtml(formatMoney(credit / 100))}</td>
+        <td class="money-cell align-right${balanceClass}">${escapeHtml(formatMoney(balance / 100))}</td>
+      </tr>`;
+    }).join("");
+    const totalBalanceClass = balance < 0 ? " ledger-negative-balance" : "";
+    return `<section class="ledger-account-block">
+      <h3 class="ledger-account-title">${escapeHtml(account)}</h3>
+      <div class="table-wrap ledger-account-table-wrap">
+        <table class="ledger-table ledger-account-table">
+          <thead><tr><th>Tanggal</th><th>No. transaksi</th><th>Keterangan</th><th class="align-right">Debit</th><th class="align-right">Kredit</th><th class="align-right">Saldo</th></tr></thead>
+          <tbody>${openingRow}${tableRows}</tbody>
+          <tfoot><tr class="ledger-total-row"><td colspan="3">Total</td><td class="money-cell align-right">${escapeHtml(formatMoney(totalDebit / 100))}</td><td class="money-cell align-right">${escapeHtml(formatMoney(totalCredit / 100))}</td><td class="money-cell align-right${totalBalanceClass}">${escapeHtml(formatMoney(balance / 100))}</td></tr></tfoot>
+        </table>
+      </div>
+    </section>`;
+  }).join("");
 }
 
 function renderReport() {
@@ -1776,26 +1920,62 @@ function renderReport() {
   renderLedger();
 }
 
+function renderJournalTotals(rows) {
+  const debit = rows.reduce((total, row) => total + toCents(row.debit), 0);
+  const credit = rows.reduce((total, row) => total + toCents(row.kredit), 0);
+  const difference = Math.abs(debit - credit);
+  const balanced = difference === 0;
+  const status = balanced ? "Seimbang" : "Tidak seimbang";
+  const indicator = balanced ? "Seimbang ✓" : `Tidak seimbang: selisih ${formatMoney(difference / 100)}`;
+
+  byId("journal-total-debit").textContent = formatMoney(debit / 100);
+  byId("journal-total-credit").textContent = formatMoney(credit / 100);
+  byId("journal-balance-state").textContent = status;
+  byId("journal-balance-indicator").textContent = indicator;
+  byId("journal-balance").classList.toggle("is-balanced", balanced);
+  byId("journal-balance").classList.toggle("is-unbalanced", !balanced);
+  byId("journal-balance-indicator").classList.toggle("is-balanced", balanced);
+  byId("journal-balance-indicator").classList.toggle("is-unbalanced", !balanced);
+}
+
 async function loadJournal() {
   const rows = await api("/api/journal");
+  renderJournalTotals(rows);
   const body = byId("journal-body");
   if (!rows.length) {
     body.innerHTML = emptyRow(6, "Jurnal akan muncul setelah transaksi dicatat.");
     return;
   }
-  body.innerHTML = rows.map((row) => `<tr>
-    <td>${formatDate(row.tanggal)}</td><td class="id-cell">#${escapeHtml(row.id_penjualan)}</td>
-    <td>${escapeHtml(row.keterangan)}</td><td><strong>${escapeHtml(row.akun)}</strong></td>
-    <td class="money-cell align-right">${Number(row.debit) ? formatMoney(row.debit) : "—"}</td>
-    <td class="money-cell align-right">${Number(row.kredit) ? formatMoney(row.kredit) : "—"}</td>
-  </tr>`).join("");
+  body.innerHTML = rows.map((row) => {
+    const debit = toCents(row.debit);
+    const credit = toCents(row.kredit);
+    return `<tr>
+      <td>${escapeHtml(formatDate(row.tanggal))}</td><td class="id-cell">#${escapeHtml(row.id_penjualan)}</td>
+      <td>${escapeHtml(row.keterangan)}</td><td><strong>${escapeHtml(row.akun)}</strong></td>
+      <td class="money-cell align-right">${escapeHtml(debit ? formatMoney(debit / 100) : "—")}</td>
+      <td class="money-cell align-right">${escapeHtml(credit ? formatMoney(credit / 100) : "—")}</td>
+    </tr>`;
+  }).join("");
+}
+
+function setSaleDateLimit() {
+  const today = bookingToday();
+  const input = byId("sale-date");
+  input.max = today;
+}
+
+function setSaleDateToToday() {
+  const today = bookingToday();
+  const input = byId("sale-date");
+  input.value = today;
+  setSaleDateLimit();
 }
 
 async function loadInitialData() {
   byId("today-label").textContent = dateFormatter.format(new Date());
   byId("footer-year").textContent = new Date().getFullYear();
-  byId("sale-date").value = todayIso();
-  byId("installment-first-due").value = addMonths(todayIso(), 1);
+  setSaleDateToToday();
+  byId("installment-first-due").value = addMonths(bookingToday(), 1);
   byId("customer-date").value = todayIso();
   byId("booking-date").min = bookingToday();
   if (!byId("booking-date").value) byId("booking-date").value = bookingToday();
@@ -2224,9 +2404,16 @@ byId("cart-content").addEventListener("click", (event) => {
 
 byId("sale-customer").addEventListener("change", renderCart);
 byId("sale-date").addEventListener("change", () => {
-  byId("installment-first-due").min = byId("sale-date").value || todayIso();
+  const today = bookingToday();
+  setSaleDateLimit();
+  if (byId("sale-date").value > today) {
+    setSaleDateToToday();
+    showNotice("Tanggal transaksi tidak boleh setelah hari ini.", "error");
+  }
+  const transactionDate = byId("sale-date").value || today;
+  byId("installment-first-due").min = transactionDate;
   if (byId("sale-method").value === "Kredit") {
-    byId("installment-first-due").value = addMonths(byId("sale-date").value || todayIso(), 1);
+    byId("installment-first-due").value = addMonths(transactionDate, 1);
   }
   renderCart();
 });
@@ -2263,7 +2450,7 @@ function renderInstallmentPreview() {
     preview.innerHTML = "<span>Tambahkan item dan pilih tenor untuk melihat jadwal cicilan.</span>";
     return;
   }
-  const baseAmount = Math.floor(total / months);
+  const baseAmount = Math.round(total / months);
   preview.innerHTML = Array.from({ length: months }, (_, index) => {
     const amount = index === months - 1 ? total - baseAmount * (months - 1) : baseAmount;
     return `<div class="installment-preview-row"><span>Ke-${index + 1}</span><span>Jatuh tempo ${formatDate(addMonths(firstDue, index))}</span><strong>${formatMoney(amount)}</strong></div>`;
@@ -2275,10 +2462,10 @@ function updateInstallmentFields() {
   byId("installment-fields").hidden = !isCredit;
   byId("installment-months").required = isCredit;
   byId("installment-first-due").required = isCredit;
-  byId("installment-first-due").min = byId("sale-date").value || todayIso();
+  byId("installment-first-due").min = byId("sale-date").value || bookingToday();
   if (isCredit) {
     if (!byId("installment-first-due").value) {
-      byId("installment-first-due").value = addMonths(byId("sale-date").value || todayIso(), 1);
+      byId("installment-first-due").value = addMonths(byId("sale-date").value || bookingToday(), 1);
     }
   }
   renderInstallmentPreview();
@@ -2353,6 +2540,12 @@ byId("checkout-submit").addEventListener("click", async () => {
     errorNotice.hidden = false;
     return;
   }
+  setSaleDateLimit();
+  if (!state.bookingPayment?.id_penjualan && byId("sale-date").value > bookingToday()) {
+    errorNotice.textContent = "Tanggal transaksi tidak boleh setelah hari ini.";
+    errorNotice.hidden = false;
+    return;
+  }
   if (method === "Kredit" && (!byId("installment-months").value || !dueDate || dueDate < byId("sale-date").value)) {
     errorNotice.textContent = "Lengkapi tenor dan tanggal jatuh tempo pertama yang valid.";
     errorNotice.hidden = false;
@@ -2395,8 +2588,8 @@ byId("checkout-submit").addEventListener("click", async () => {
     state.catalogQuantities = {};
     state.addedItemId = null;
     byId("sale-customer").value = "";
-    byId("sale-date").value = todayIso();
-    byId("installment-first-due").value = addMonths(todayIso(), 1);
+    setSaleDateToToday();
+    byId("installment-first-due").value = addMonths(bookingToday(), 1);
     byId("installment-months").value = "";
     selectPaymentMethod("Tunai");
     renderCart();
